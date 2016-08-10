@@ -100,7 +100,7 @@ router.get("/redir") { _, response, next in
 // Reading parameters
 // Accepts user as a parameter
 router.get("/users/:user") { request, response, next in
-    response.headers["Content-Type"] = "text/plain; charset=utf-8"
+    response.headers["Content-Type"] = "text/html"
     let p1 = request.parameters["user"] ?? "(nil)"
     try response.send(
         "<!DOCTYPE html><html><body>" +
