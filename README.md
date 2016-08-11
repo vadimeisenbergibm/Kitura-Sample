@@ -20,6 +20,10 @@ This is a sample [Kitura](https://github.com/IBM-Swift/Kitura/) application. See
   You should see message _Listening on port 8090_. The result executable is located in `.build/debug` directory: `./.build/debug/KituraSample`
 3. Open your browser at [http://localhost:8090](http://localhost:8090)
 
+## Running in Xcode
+
+You can also run this sample application inside Xcode. For more details, visit the [Kitura wiki](https://github.com/IBM-Swift/Kitura/wiki/Building-your-Kitura-application-in-Xcode).
+
 ## License
 
 This sample app is licensed under the [Apache License, Version 2.0](LICENSE.txt).
