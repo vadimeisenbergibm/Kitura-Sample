@@ -134,7 +134,7 @@ router.get("/multi") { request, response, next in
     try response.send("I come afterward..\n").end()
 }
 
-router.addTemplateEngine(StencilTemplateEngine())
+router.add(templateEngine: StencilTemplateEngine())
 
 // Support for Mustache implemented for OSX only yet
 #if !os(Linux)
