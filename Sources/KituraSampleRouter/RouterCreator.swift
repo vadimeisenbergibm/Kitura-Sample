@@ -34,6 +34,23 @@ enum SampleError: Swift.Error {
     case sampleError
 }
 
+let customParameterHandler: RouterHandler = { request, response, next in
+    let id = request.parameters["id"] ?? "unknown"
+    response.send("\(id)|").status(.OK)
+    next()
+}
+
+class CustomParameterMiddleware: RouterMiddleware {
+    func handle(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) {
+        do {
+            try customParameterHandler(request, response, next)
+        } catch {
+            Log.error("customParameterHandler returned error: \(error)")
+        }
+
+    }
+}
+
 extension SampleError: CustomStringConvertible {
     var description: String {
         switch self {
@@ -105,7 +122,7 @@ public struct RouterCreator {
 
         // Redirection example
         router.get("/redir") { _, response, next in
-            try response.redirect("http://www.ibm.com")
+            try response.redirect("http://www.ibm.com/us-en/")
             next()
         }
 
@@ -131,6 +148,9 @@ public struct RouterCreator {
         router.get("/multi") { request, response, next in
             try response.send("I come afterward..\n").end()
         }
+
+        router.get("/user/:id", allowPartialMatch: false, middleware: CustomParameterMiddleware())
+        router.get("/user/:id", handler: customParameterHandler)
 
         router.add(templateEngine: StencilTemplateEngine())
 
@@ -195,7 +215,8 @@ public struct RouterCreator {
         router.all { request, response, next in
             if  response.statusCode == .unknown  {
                 // Remove this wrapping if statement, if you want to handle requests to / as well
-                if  request.originalURL != "/"  &&  request.originalURL != ""  {
+                let path = request.urlComponents.path
+                if  path != "/" && path != ""  {
                     try response.status(.notFound).send("Route not found in Sample application!").end()
                 }
             }
