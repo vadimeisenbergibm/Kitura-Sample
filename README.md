@@ -15,11 +15,13 @@ This is a sample [Kitura](https://github.com/IBM-Swift/Kitura/) application. See
 1. `git clone https://github.com/IBM-Swift/Kitura-Sample.git && cd Kitura-Sample`
 > Note: do not use the GitHub "Download ZIP" button
 
-2. `./.build/debug/KituraSample`
+2. `swift build`
+
+3. `./.build/debug/KituraSample`
 
   You should see message _Listening on port 8090_.
   
-3. Open your browser at [http://localhost:8090](http://localhost:8090)
+4. Open your browser at [http://localhost:8090](http://localhost:8090)
 
 ## Testing
 `swift test`
