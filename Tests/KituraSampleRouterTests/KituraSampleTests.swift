@@ -198,7 +198,7 @@ class KituraSampleTests: KituraTest {
 
         runGetResponseTest(path: path) { body in
             do {
-                #if os(Linux)
+                #if os(Linux) && !swift(>=3.1)
                     let regularExpressionOptional: RegularExpression? =
                         try RegularExpression(pattern: pattern, options: [])
                 #else
