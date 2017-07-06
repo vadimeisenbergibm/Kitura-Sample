@@ -160,7 +160,8 @@ public struct RouterCreator {
         _extension.registerSimpleTag("custom") { _ in
             return "Hello World"
         }
-        router.add(templateEngine: StencilTemplateEngine(extension: _extension))
+        router.add(templateEngine: StencilTemplateEngine(extension: _extension),
+                   forFileExtensions: ["html"])
 
         // Support for Mustache implemented for OSX only yet
         #if !os(Linux) || swift(>=3.1)
@@ -203,6 +204,18 @@ public struct RouterCreator {
             do {
                 // we have to specify file extension here since Stencil is not the default engine
                 try response.render("document.stencil", context: stencilContext).end()
+            } catch {
+                Log.error("Failed to render template \(error)")
+            }
+        }
+
+        router.get("/articles.html") { _, response, next in
+            defer {
+                next()
+            }
+            do {
+                // we have to specify file extension here since it is not the extension of Stencil
+                try response.render("document.html", context: stencilContext).end()
             } catch {
                 Log.error("Failed to render template \(error)")
             }
