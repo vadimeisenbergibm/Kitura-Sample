@@ -20,7 +20,6 @@ import Foundation
 
 import Kitura
 import KituraMarkdown
-import KituraMustache
 import KituraStencil // required for using StencilTemplateEngine
 import Stencil // required for adding a Stencil namespace to StencilTemplateEngine
 
@@ -160,33 +159,11 @@ public struct RouterCreator {
         _extension.registerSimpleTag("custom") { _ in
             return "Hello World"
         }
-        router.add(templateEngine: StencilTemplateEngine(extension: _extension),
+
+        let templateEngine = StencilTemplateEngine(extension: _extension)
+        router.setDefault(templateEngine: templateEngine)
+        router.add(templateEngine: templateEngine,
                    forFileExtensions: ["html"])
-
-        // Support for Mustache implemented for OSX only yet
-        #if !os(Linux) || swift(>=3.1)
-            router.setDefault(templateEngine: MustacheTemplateEngine())
-
-            router.get("/trimmer") { _, response, next in
-                defer {
-                    next()
-                }
-                // the example from https://github.com/groue/GRMustache.swift/blob/master/README.md
-                var context: [String: Any] = [
-                    "name": "Arthur",
-                    "date": Date(),
-                    "realDate": Date().addingTimeInterval(60*60*24*3),
-                    "late": true
-                ]
-
-                // Let template format dates with `{{format(...)}}`
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateStyle = .medium
-                context["format"] = dateFormatter
-
-                try response.render("document", context: context).end()
-            }
-        #endif
 
         // the example from https://github.com/kylef/Stencil
         let stencilContext: [String: Any] = [
@@ -196,14 +173,12 @@ public struct RouterCreator {
             ]
         ]
 
-
         router.get("/articles") { _, response, next in
             defer {
                 next()
             }
             do {
-                // we have to specify file extension here since Stencil is not the default engine
-                try response.render("document.stencil", context: stencilContext).end()
+                try response.render("document", context: stencilContext).end()
             } catch {
                 Log.error("Failed to render template \(error)")
             }
@@ -226,8 +201,7 @@ public struct RouterCreator {
                 next()
             }
             do {
-                // we have to specify file extension here since Stencil is not the default engine
-                try response.render("subdirectory/documentInSubdirectory.stencil",
+                try response.render("subdirectory/documentInSubdirectory",
                                     context: stencilContext).end()
             } catch {
                 Log.error("Failed to render template \(error)")
@@ -239,8 +213,7 @@ public struct RouterCreator {
                 next()
             }
             do {
-                // we have to specify file extension here since Stencil is not the default engine
-                try response.render("includingDocument.stencil",
+                try response.render("includingDocument",
                                     context: stencilContext).end()
             } catch {
                 Log.error("Failed to render template \(error)")
@@ -252,8 +225,7 @@ public struct RouterCreator {
                 next()
             }
             do {
-                // we have to specify file extension here since Stencil is not the default engine
-                try response.render("customTag.stencil", context: [:]).end()
+                try response.render("customTag", context: [:]).end()
             } catch {
                 Log.error("Failed to render template \(error)")
             }

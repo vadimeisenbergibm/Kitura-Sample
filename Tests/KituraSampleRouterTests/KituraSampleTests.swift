@@ -21,7 +21,7 @@ import Foundation
 class KituraSampleTests: KituraTest {
 
     static var allTests: [(String, (KituraSampleTests) -> () throws -> Void)] {
-        var testsToReturn: [(String, (KituraSampleTests) -> () throws -> Void)]  = [
+        return [
             ("testURLParameters", testURLParameters),
             ("testMultiplicity", testMulitplicity),
             ("testCustomMiddlewareURLParameter", testCustomMiddlewareURLParameter),
@@ -51,10 +51,6 @@ class KituraSampleTests: KituraTest {
             ("testPostPutDeletePostHello", testPostPutDeletePostHello),
             ("testPutPostDeletePutHello", testPutPostDeletePutHello)
         ]
-        #if !os(Linux) || swift(>=3.1)
-            testsToReturn.append(("testMustache", testMustache))
-        #endif
-        return testsToReturn
     }
 
     func testURLParameters() {
@@ -178,19 +174,6 @@ class KituraSampleTests: KituraTest {
         runGetResponseTest(path: "/custom_tag_stencil", expectedResponseText: "\n\nHello World\n")
     }
 
-    func testMustache() {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-
-        let arrivalDate = formatter.string(from: Date())
-        let postponementDate = formatter.string(from: Date().addingTimeInterval(60*60*24*3))
-
-        let expectedResponseText = "\n\nHello Arthur\n" +
-            "Your beard trimmer will arrive on \(arrivalDate).\n\n" +
-            "Well, on \(postponementDate) because of a Martian attack.\n\n"
-        runGetResponseTest(path: "/trimmer", expectedResponseText: expectedResponseText)
-    }
-
     func testStaticHTML() {
         let expectedResponseText = "<!DOCTYPE html>\n<html>\n<body>\n\n" +
                                    "<h1>Hello from Kitura </h1>\n\n" +
@@ -231,10 +214,10 @@ class KituraSampleTests: KituraTest {
                     return
                 }
 
-                #if os(Linux)
-                    let titleRange = match.range(at: 1)
-                #else
+                #if !os(Linux) && !swift(>=3.2)
                     let titleRange = match.rangeAt(1)
+                #else
+                    let titleRange = match.range(at: 1)
                 #endif
 
                 let titleInBody = NSString(string: body).substring(with: titleRange)
