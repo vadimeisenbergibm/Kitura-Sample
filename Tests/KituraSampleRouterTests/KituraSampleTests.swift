@@ -214,12 +214,7 @@ class KituraSampleTests: KituraTest {
                     return
                 }
 
-                #if !os(Linux) && !swift(>=3.2)
-                    let titleRange = match.rangeAt(1)
-                #else
-                    let titleRange = match.range(at: 1)
-                #endif
-
+                let titleRange = match.range(at: 1)
                 let titleInBody = NSString(string: body).substring(with: titleRange)
                 XCTAssertEqual(titleInBody, expectedTitle,
                                "returned title does not match the expected one")
