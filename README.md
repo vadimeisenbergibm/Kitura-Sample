@@ -77,7 +77,7 @@ This route accepts a parameter in its URL and uses that parameter in its HTML cr
 
 
 ## Testing
-To invoke the tests locally, run `swift test` from the Kitura-Sample directory.
+To run the tests locally, run `swift test` from the Kitura-Sample directory.
 
 ## Running in Xcode
 
