@@ -25,7 +25,6 @@ import Stencil // required for adding a Stencil namespace to StencilTemplateEngi
 import KituraWebSocket
 
 import LoggerAPI
-import HeliumLogger
 
 #if os(Linux)
     import Glibc
