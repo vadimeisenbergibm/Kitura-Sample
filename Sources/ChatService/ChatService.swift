@@ -21,7 +21,9 @@ import Foundation
 
 import KituraWebSocket
 
-class ChatService: WebSocketService {
+public class ChatService: WebSocketService {
+    
+    public init() {}
     
     private let connectionsLock = DispatchSemaphore(value: 1)
     
@@ -82,7 +84,7 @@ class ChatService: WebSocketService {
         let displayName = String(message.dropFirst(2))
         
         if messageType == MessageType.sentMessage.rawValue || messageType == MessageType.startedTyping.rawValue ||
-                       messageType == MessageType.stoppedTyping.rawValue {
+            messageType == MessageType.stoppedTyping.rawValue {
             lockConnectionsLock()
             let connectionInfo = connections[from.id]
             unlockConnectionsLock()

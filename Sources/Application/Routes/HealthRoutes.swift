@@ -1,5 +1,5 @@
 /**
- * Copyright IBM Corporation 2016
+ * Copyright IBM Corporation 2018
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,18 @@
  * limitations under the License.
  **/
 
-import XCTest
+import LoggerAPI
+import Health
+import KituraContracts
 
-@testable import KituraSampleRouterTests
-
-XCTMain([
-           testCase(KituraSampleTests.allTests),
-           testCase(TestHelloRoutes.allTests),
-           testCase(TestCodableRoutes.allTests)
-       ])
+func initializeHealthRoutes(app: App) {
+    
+    app.router.get("/health") { (respondWith: (Status?, RequestError?) -> Void) -> Void in
+        if health.status.state == .UP {
+            respondWith(health.status, nil)
+        } else {
+            respondWith(nil, RequestError(.serviceUnavailable, body: health.status))
+        }
+    }
+    
+}

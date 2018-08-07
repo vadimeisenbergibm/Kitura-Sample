@@ -21,25 +21,21 @@ import PackageDescription
 
 let package = Package(
     name: "Kitura-Sample",
-    products: [
-        .executable(
-            name: "Kitura-Sample",
-            targets: ["Kitura-Sample"]
-        )
-    ],
     dependencies: [
         .package(url: "https://github.com/IBM-Swift/Kitura.git", from: "2.3.0"),
         .package(url: "https://github.com/IBM-Swift/HeliumLogger.git", from: "1.7.1"),
+        .package(url: "https://github.com/IBM-Swift/CloudEnvironment.git", from: "8.0.0"),
+        .package(url: "https://github.com/RuntimeTools/SwiftMetrics.git", from: "2.0.0"),
+        .package(url: "https://github.com/IBM-Swift/Health.git", from: "1.0.0"),
+        .package(url: "https://github.com/IBM-Swift/Kitura-OpenAPI.git", from: "1.0.0"),
         .package(url: "https://github.com/IBM-Swift/Kitura-StencilTemplateEngine.git", from: "1.9.0"),
-        .package(url: "https://github.com/IBM-Swift/Kitura-Markdown", from: "1.0.0"),
+        .package(url: "https://github.com/IBM-Swift/Kitura-Markdown.git", from: "1.0.0"),
         .package(url: "https://github.com/IBM-Swift/Kitura-WebSocket.git", from: "2.0.0")
     ],
     targets: [
-      .target(name: "Kitura-Sample",
-              dependencies: ["KituraSampleRouter", "Kitura", "HeliumLogger"]),
-      .target(name: "KituraSampleRouter",
-              dependencies: ["Kitura", "KituraStencil", "KituraMarkdown", "Kitura-WebSocket"]),
-      .testTarget(name: "KituraSampleRouterTests",
-                  dependencies: ["KituraSampleRouter", "HeliumLogger"]),
+        .target(name: "Kitura-Sample", dependencies: [ .target(name: "Application"), .target(name: "ChatService"), "Kitura" , "HeliumLogger"]),
+        .target(name: "Application", dependencies: [ "Kitura", "CloudEnvironment","SwiftMetrics","Health", "KituraOpenAPI", "KituraMarkdown", "KituraStencil"]),
+        .target(name: "ChatService", dependencies: ["Kitura-WebSocket"]),
+        .testTarget(name: "KituraSampleRouterTests" , dependencies: [.target(name: "Application"), "Kitura","HeliumLogger" ])
     ]
 )

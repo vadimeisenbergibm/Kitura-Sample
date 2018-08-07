@@ -18,7 +18,7 @@ import Foundation
 import Kitura
 import KituraContracts
 
-//Book is a sample struct used in the Codable routes
+// Book is a sample struct used in the Codable routes
 
 public struct Book: Codable {
     

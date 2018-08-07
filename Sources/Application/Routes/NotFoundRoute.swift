@@ -1,5 +1,5 @@
 /**
- * Copyright IBM Corporation 2016
+ * Copyright IBM Corporation 2018
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,16 @@
  * limitations under the License.
  **/
 
-import XCTest
-
-@testable import KituraSampleRouterTests
-
-XCTMain([
-           testCase(KituraSampleTests.allTests),
-           testCase(TestHelloRoutes.allTests),
-           testCase(TestCodableRoutes.allTests)
-       ])
+func initializeNotFoundRoute(app: App) {
+    // A custom Not found handler
+    app.router.all { request, response, next in
+        if  response.statusCode == .unknown  {
+            // Remove this wrapping if statement, if you want to handle requests to / as well
+            let path = request.urlURL.path
+            if  path != "/" && path != ""  {
+                try response.status(.notFound).send("Route not found in Sample application!").end()
+            }
+        }
+        next()
+    }
+}

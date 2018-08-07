@@ -17,18 +17,18 @@
 import Foundation
 import Kitura
 import LoggerAPI
-import HeliumLogger
-import Application
-import KituraWebSocket
-import ChatService
 
-do {
-    
-    HeliumLogger.use(LoggerMessageType.info)
-    WebSocket.register(service: ChatService(), onPath: "kitura-chat")
-    let app = try App()
-    try app.run()
-    
-} catch let error {
-    Log.error(error.localizedDescription)
+func initializeStaticFileServers(app: App) {
+    app.router.all("/static", middleware: StaticFileServer())
+    app.router.all("/chat", middleware: StaticFileServer(path: "./chat"))
+    app.router.all("/", middleware: StaticFileServer(path: "./Views"))
+    app.router.get("/") { request, response, next in
+        response.headers["Content-Type"] = "text/html; charset=utf-8"
+        do {
+            try response.render("home.html", context: [String: Any]()).end()
+        } catch {
+            Log.error("Failed to render template \(error)")
+        }
+        
+    }
 }

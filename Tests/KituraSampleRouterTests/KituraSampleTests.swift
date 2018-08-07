@@ -27,7 +27,6 @@ class KituraSampleTests: KituraTest {
             ("testCustomMiddlewareURLParameter", testCustomMiddlewareURLParameter),
             ("testCustomMiddlewareURLParameterWithQueryParam",
              testCustomMiddlewareURLParameterWithQueryParam),
-            ("testGetHello", testGetHello),
             ("testGetError", testGetError),
             ("testMulti", testMulti),
             ("testParameter", testParameter),
@@ -45,19 +44,13 @@ class KituraSampleTests: KituraTest {
             ("testDefaultIndex", testDefaultIndex),
             ("testIndex", testIndex),
             ("testDefaultPage", testDefaultPage),
-            ("testPostHello", testPostHello),
-            ("testPutHello", testPutHello),
-            ("testDeleteHello", testDeleteHello),
-            ("testPostPutDeletePostHello", testPostPutDeletePostHello),
-            ("testPutPostDeletePutHello", testPutPostDeletePutHello),
-            ("testCodableGet", testCodableGet),
-            ("testCodablePost", testCodablePost),
         ]
     }
 
     func testURLParameters() {
         performServerTest { expectation in
             self.performRequest("get", path: "/users/:user", expectation: expectation) { response in
+                XCTAssertEqual(response.statusCode, HTTPStatusCode.OK, "Route did not match")
                 expectation.fulfill()
             }
         }
@@ -67,34 +60,6 @@ class KituraSampleTests: KituraTest {
         performServerTest { expectation in
             self.performRequest("get", path: "/multi", expectation: expectation) { response in
                 XCTAssertEqual(response.statusCode, HTTPStatusCode.OK, "Route did not match")
-                expectation.fulfill()
-            }
-        }
-    }
-
-    private typealias BodyChecker =  (String) -> Void
-    private func checkResponse(response: ClientResponse, expectedResponseText: String? = nil,
-        expectedStatusCode: HTTPStatusCode = HTTPStatusCode.OK, bodyChecker: BodyChecker? = nil) {
-        XCTAssertEqual(response.statusCode, expectedStatusCode,
-                       "No success status code returned")
-        if let optionalBody = try? response.readString(), let body = optionalBody {
-            if let expectedResponseText = expectedResponseText {
-                XCTAssertEqual(body, expectedResponseText, "mismatch in body")
-            }
-            bodyChecker?(body)
-        } else {
-            XCTFail("No response body")
-        }
-
-    }
-
-    private func runGetResponseTest(path: String, expectedResponseText: String? = nil,
-                                    expectedStatusCode: HTTPStatusCode = HTTPStatusCode.OK,
-                                    bodyChecker: BodyChecker? = nil) {
-        performServerTest { expectation in
-            self.performRequest("get", path: path, expectation: expectation) { response in
-                self.checkResponse(response: response, expectedResponseText: expectedResponseText,
-                                   expectedStatusCode: expectedStatusCode, bodyChecker: bodyChecker)
                 expectation.fulfill()
             }
         }
@@ -112,10 +77,6 @@ class KituraSampleTests: KituraTest {
                            expectedResponseText: "\(id)|\(id)|")
     }
 
-    func testGetHello() {
-        runGetResponseTest(path: "/hello", expectedResponseText: "Hello World, from Kitura!")
-    }
-
     func testGetError() {
         runGetResponseTest(path: "/error",
                            expectedResponseText: "Caught the error: Example of error being set",
@@ -125,12 +86,6 @@ class KituraSampleTests: KituraTest {
     func testMulti() {
         runGetResponseTest(path: "/multi",
                            expectedResponseText: "I'm here!\nMe too!\nI come afterward..\n")
-    }
-
-    private func runTestParameter(user: String) {
-        let userInPath = user.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? user
-        let responseText = "<!DOCTYPE html><html><body><b>User:</b> \(user)</body></html>\n\n"
-        runGetResponseTest(path: "/users/\(userInPath)", expectedResponseText: responseText)
     }
 
     func testParameter() {
@@ -191,41 +146,6 @@ class KituraSampleTests: KituraTest {
         runTestUnknownPath(path: "/static/test.htm")
     }
 
-    private func runTestThatCorrectHTMLTitleIsReturned(expectedTitle: String, path: String) {
-        let pattern = "<title>(.*?)</title>"
-
-        runGetResponseTest(path: path) { body in
-            do {
-                #if os(Linux) && !swift(>=3.1)
-                    let regularExpressionOptional: RegularExpression? =
-                        try RegularExpression(pattern: pattern, options: [])
-                #else
-                    let regularExpressionOptional: NSRegularExpression? =
-                        try NSRegularExpression(pattern: pattern, options: [])
-                #endif
-                guard let regularExpression = regularExpressionOptional else {
-                    XCTFail("failed to create regular expression")
-                    return
-                }
-
-                let matches = regularExpression.matches(in: body, options: [],
-                    range: NSMakeRange(0, body.count))
-
-                guard let match = matches.first else {
-                    XCTFail("no match of title tag in body")
-                    return
-                }
-
-                let titleRange = match.range(at: 1)
-                let titleInBody = NSString(string: body).substring(with: titleRange)
-                XCTAssertEqual(titleInBody, expectedTitle,
-                               "returned title does not match the expected one")
-            } catch {
-                XCTFail("failed to create regular expression: \(error)")
-            }
-        }
-    }
-
     func testRedirection() {
         runTestThatCorrectHTMLTitleIsReturned(expectedTitle: "IBM - United States", path: "/redir")
     }
@@ -241,183 +161,4 @@ class KituraSampleTests: KituraTest {
     func testDefaultPage() {
         runTestThatCorrectHTMLTitleIsReturned(expectedTitle: "Kitura Sample", path: "")
     }
-
-    private func runTestUser(expectedUser: String, expectation: XCTestExpectation) {
-        self.performRequestSynchronous("get", path: "/hello", expectation: expectation) {
-            response, dispatchGroup in
-            self.checkResponse(response: response,
-                               expectedResponseText: "Hello \(expectedUser), from Kitura!")
-            dispatchGroup.leave()
-            expectation.fulfill()
-        }
-    }
-
-    private func runTestModifyUser(method: String, userToSet: String? = nil,
-                                   expectation: XCTestExpectation) {
-        self.performRequestSynchronous(method, path: "/hello", expectation: expectation,
-                                       requestModifier: { request in
-                                           if let userToSet = userToSet {
-                                               request.write(from: userToSet)
-                                           }
-                                       }) { response, dispatchGroup in
-            self.checkResponse(response: response,
-                expectedResponseText: "Got a \(method.uppercased()) request")
-            dispatchGroup.leave()
-            expectation.fulfill()
-        }
-    }
-
-    func testPostHello() {
-        performServerTest(asyncTasks: { expectation in
-            self.runTestUser(expectedUser: "World", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "post", userToSet: "John", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "John", expectation: expectation)
-        })
-    }
-
-    func testPutHello() {
-        performServerTest(asyncTasks: { expectation in
-            self.runTestUser(expectedUser: "World", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "put", userToSet: "John", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "John", expectation: expectation)
-        })
-    }
-
-    func testDeleteHello() {
-        performServerTest(asyncTasks: { expectation in
-            self.runTestUser(expectedUser: "World", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "delete", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "World", expectation: expectation)
-        })
-    }
-
-    func testPostPutDeletePostHello() {
-        performServerTest(asyncTasks: { expectation in
-            self.runTestUser(expectedUser: "World", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "post", userToSet: "John", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "John", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "put", userToSet: "Mary", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "Mary", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "delete", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "World", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "post", userToSet: "Bob", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "Bob", expectation: expectation)
-        })
-    }
-
-    func testPutPostDeletePutHello() {
-        performServerTest(asyncTasks: { expectation in
-            self.runTestUser(expectedUser: "World", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "put", userToSet: "John", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "John", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "post", userToSet: "Mary", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "Mary", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "delete", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "World", expectation: expectation)
-        }, { expectation in
-            self.runTestModifyUser(method: "put", userToSet: "Bob", expectation: expectation)
-        }, { expectation in
-            self.runTestUser(expectedUser: "Bob", expectation: expectation)
-        })
-    }
-
-    func testCodableGet() {
-        let book: Book = Book(name: "Sample", author: "zzz", rating: 5)
-        runGetCodableResponseTest(path: "/books", expectedResponse: book)
-    }
-
-    func testCodablePost() {
-        let book: String = "{\"name\": \"xxx\",\"author\": \"yyy\",\"rating\": 4}"
-        performServerTest(asyncTasks: { expectation in
-            self.runTestSubmitBook(method: "post", book: book, expectation: expectation)
-        }, { expectation in
-            self.runGetBook(method: "get", expectation: expectation)
-        })
-    }
-
-    private func runGetCodableResponseTest(path: String, expectedResponse: Book? = nil, expectedStatusCode: HTTPStatusCode = HTTPStatusCode.OK) {
-        performServerTest { expectation in
-            self.performRequest("get", path: path, expectation: expectation) { response in
-                self.checkCodableResponse(response: response, expectedResponse: expectedResponse,
-                expectedStatusCode: expectedStatusCode)
-                expectation.fulfill()
-           }
-        }
-    }
-
-    private func runTestSubmitBook(method: String, book: String? = nil, expectation: XCTestExpectation) {
-        self.performRequestSynchronous(method, path: "/books", expectation: expectation, headers: ["Content-Type":"application/json"],requestModifier: { request in request.write(from: book!)}) { response, dispatchGroup in
-                let expectedBook: Book = Book(name: "xxx", author: "yyy", rating: 4)
-                self.checkCodableResponse(response: response, expectedResponse: expectedBook, expectedStatusCode: HTTPStatusCode.created)
-                dispatchGroup.leave()
-                expectation.fulfill()
-        }
-    }
-
-    private func runGetBook(method: String, expectation: XCTestExpectation) {
-        self.performRequestSynchronous(method, path: "/books", expectation: expectation, headers: ["Content-Type":"application/json"]) {
-            response, dispatchGroup in
-            let book: Book = Book(name: "xxx", author: "yyy", rating: 4)
-            self.checkCodableResponse(response: response,
-                               expectedResponse: book)
-            dispatchGroup.leave()
-            expectation.fulfill()
-        }
-    }
-
-    private func checkCodableResponse(response: ClientResponse, expectedResponse: Book? = nil,
-                               expectedStatusCode: HTTPStatusCode = HTTPStatusCode.OK) {
-        XCTAssertEqual(response.statusCode, expectedStatusCode,
-                       "No success status code returned")
-        if let optionalBody = try? response.readString(), let body = optionalBody {
-            var responseString = body
-            if(responseString.hasPrefix("[")) {
-                responseString.removeFirst()
-                responseString.removeLast()
-            }
-            if responseString == "" {
-                XCTAssertNil(expectedResponse)
-            } else {
-                let json = responseString.data(using: .utf8)!
-                do {
-                    let myStruct = try JSONDecoder().decode(Book.self, from: json)
-                    if let expectedBook = expectedResponse {
-                        XCTAssertEqual(myStruct.name, expectedBook.name)
-                        XCTAssertEqual(myStruct.author, expectedBook.author)
-                        XCTAssertEqual(myStruct.rating, expectedBook.rating)
-                    }
-                } catch {
-                    print("Error")
-                }
-            }
-            } else {
-                XCTFail("No response body")
-        }
-    }
-}
-
-struct Book: Decodable {
-    let name: String
-    let author: String
-    let rating: Int
 }

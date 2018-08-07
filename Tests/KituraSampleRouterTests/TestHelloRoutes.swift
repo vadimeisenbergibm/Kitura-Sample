@@ -1,0 +1,152 @@
+/**
+ * Copyright IBM Corporation 2016
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
+
+import XCTest
+import KituraNet
+import Foundation
+
+class TestHelloRoutes: KituraTest {
+    static var allTests: [(String, (TestHelloRoutes) -> () throws -> Void)] {
+        return [
+            ("testGetHello", testGetHello),
+            ("testPostHello", testPostHello),
+            ("testPutHello", testPutHello),
+            ("testDeleteHello", testDeleteHello),
+            ("testPostPutDeletePostHello", testPostPutDeletePostHello),
+            ("testPutPostDeletePutHello", testPutPostDeletePutHello),
+        ]
+    }
+    
+    func testGetHello() {
+        performServerTest(asyncTasks: { expectation in
+            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                expectation.fulfill()
+            }
+        })
+    }
+    
+    func testPostHello() {
+        performServerTest(asyncTasks: { expectation in
+            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                self.performRequest("post", path: "/hello", body: "John", expectation: expectation) { response in
+                    self.checkResponse(response: response, expectedResponseText: "Got a POST request")
+                    self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                        self.checkResponse(response: response, expectedResponseText: "Hello John, from Kitura!")
+                        expectation.fulfill()
+                    }
+                }
+            }
+        })
+    }
+    
+    func testPutHello() {
+        performServerTest(asyncTasks: { expectation in
+            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                self.performRequest("put", path: "/hello", body: "John", expectation: expectation) { response in
+                    self.checkResponse(response: response, expectedResponseText: "Got a PUT request")
+                    self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                        self.checkResponse(response: response, expectedResponseText: "Hello John, from Kitura!")
+                        expectation.fulfill()
+                    }
+                }
+            }
+        })
+    }
+    
+    func testDeleteHello() {
+        performServerTest(asyncTasks: { expectation in
+            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                self.performRequest("delete", path: "/hello", expectation: expectation) { response in
+                    self.checkResponse(response: response, expectedResponseText: "Got a DELETE request")
+                    self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                        self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                        expectation.fulfill()
+                    }
+                }
+            }
+        })
+    }
+    
+    func testPostPutDeletePostHello() {
+        performServerTest(asyncTasks: { expectation in
+            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                self.performRequest("post", path: "/hello", body: "John", expectation: expectation) { response in
+                    self.checkResponse(response: response, expectedResponseText: "Got a POST request")
+                    self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                        self.checkResponse(response: response, expectedResponseText: "Hello John, from Kitura!")
+                        self.performRequest("put", path: "/hello", body: "Mary", expectation: expectation) { response in
+                            self.checkResponse(response: response, expectedResponseText: "Got a PUT request")
+                            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                                self.checkResponse(response: response, expectedResponseText: "Hello Mary, from Kitura!")
+                                self.performRequest("delete", path: "/hello", expectation: expectation) { response in
+                                    self.checkResponse(response: response, expectedResponseText: "Got a DELETE request")
+                                    self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                                        self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                                        self.performRequest("post", path: "/hello", body: "Bob", expectation: expectation) { response in
+                                            self.checkResponse(response: response, expectedResponseText: "Got a POST request")
+                                            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                                                self.checkResponse(response: response, expectedResponseText: "Hello Bob, from Kitura!")
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+    
+    func testPutPostDeletePutHello() {
+        performServerTest(asyncTasks: { expectation in
+            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                self.performRequest("put", path: "/hello", body: "John", expectation: expectation) { response in
+                    self.checkResponse(response: response, expectedResponseText: "Got a PUT request")
+                    self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                        self.checkResponse(response: response, expectedResponseText: "Hello John, from Kitura!")
+                        self.performRequest("post", path: "/hello", body: "Mary", expectation: expectation) { response in
+                            self.checkResponse(response: response, expectedResponseText: "Got a POST request")
+                            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                                self.checkResponse(response: response, expectedResponseText: "Hello Mary, from Kitura!")
+                                self.performRequest("delete", path: "/hello", expectation: expectation) { response in
+                                    self.checkResponse(response: response, expectedResponseText: "Got a DELETE request")
+                                    self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                                        self.checkResponse(response: response, expectedResponseText: "Hello World, from Kitura!")
+                                        self.performRequest("put", path: "/hello", body: "Bob", expectation: expectation) { response in
+                                            self.checkResponse(response: response, expectedResponseText: "Got a PUT request")
+                                            self.performRequest("get", path: "/hello", expectation: expectation) { response in
+                                                self.checkResponse(response: response, expectedResponseText: "Hello Bob, from Kitura!")
+                                                expectation.fulfill()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+}

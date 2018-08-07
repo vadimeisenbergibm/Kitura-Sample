@@ -2,3 +2,4 @@
 .build-ubuntu/*
 *.xcodeproj/*
 .DS_Store
+Package.resolved

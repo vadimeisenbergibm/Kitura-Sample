@@ -1,5 +1,5 @@
 /**
- * Copyright IBM Corporation 2016
+ * Copyright IBM Corporation 2018
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,17 @@
  * limitations under the License.
  **/
 
-import XCTest
+func initializeMultiHandlerRoutes(app: App) {
+    // Uses multiple handler blocks
+    app.router.get("/multi", handler: { request, response, next in
+        response.send("I'm here!\n")
+        next()
+    }, { request, response, next in
+        response.send("Me too!\n")
+        next()
+    })
 
-@testable import KituraSampleRouterTests
-
-XCTMain([
-           testCase(KituraSampleTests.allTests),
-           testCase(TestHelloRoutes.allTests),
-           testCase(TestCodableRoutes.allTests)
-       ])
+    app.router.get("/multi") { request, response, next in
+        try response.send("I come afterward..\n").end()
+    }
+}
