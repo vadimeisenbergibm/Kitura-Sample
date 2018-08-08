@@ -14,13 +14,11 @@
  * limitations under the License.
  **/
 
-import Foundation
-import Kitura
-import LoggerAPI
+import SwiftJWT
 
-func initializeStaticFileServers(app: App) {
-    app.router.all("/static", middleware: StaticFileServer())
-    app.router.all("/chat", middleware: StaticFileServer(path: "./chat"))
-	app.router.all("/jwt", middleware: StaticFileServer(path: "./Keys"))
-    app.router.all("/", middleware: StaticFileServer(path: "./Views"))
+func initializeJWTRoutes(app: App) {
+	app.router.get("/jwt") { _, response, next in
+		let name = app.getName()
+		try response.send("Hello \(name ?? "World"), from Kitura!").end()
+	}
 }
