@@ -38,10 +38,11 @@ let package = Package(
         .package(url: "https://github.com/Andrew-Lees11/appid-serversdk-swift.git", .branch("master")),
         .package(url: "https://github.com/IBM-Swift/Swift-Kuery-ORM.git", .upToNextMinor(from: "0.3.1")),
         .package(url: "https://github.com/IBM-Swift/Swift-Kuery-PostgreSQL.git", from: "1.2.0"),
+        .package(url: "https://github.com/IBM-Swift/Swift-JWT", from: "2.0.0"),
     ],
     targets: [
         .target(name: "Kitura-Sample", dependencies: [ .target(name: "Application"), .target(name: "ChatService"), "Kitura" , "HeliumLogger"]),
-        .target(name: "Application", dependencies: [ "Kitura", "CloudEnvironment","SwiftMetrics","Health", "KituraOpenAPI", "KituraMarkdown", "KituraStencil", "CredentialsHTTP", "KituraSession", "CredentialsGoogle", "CredentialsFacebook", "IBMCloudAppID" , "SwiftKueryORM", "SwiftKueryPostgreSQL"]),
+        .target(name: "Application", dependencies: [ "Kitura", "CloudEnvironment","SwiftMetrics","Health", "KituraOpenAPI", "KituraMarkdown", "KituraStencil", "CredentialsHTTP", "KituraSession", "CredentialsGoogle", "CredentialsFacebook", "IBMCloudAppID" , "SwiftKueryORM", "SwiftKueryPostgreSQL", "SwiftJWT"]),
         .target(name: "ChatService", dependencies: ["Kitura-WebSocket"]),
         .testTarget(name: "KituraSampleRouterTests" , dependencies: [.target(name: "Application"), "Kitura","HeliumLogger" ])
     ]
