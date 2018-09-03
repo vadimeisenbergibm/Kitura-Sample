@@ -19,7 +19,6 @@ import Kitura
 import KituraContracts
 
 // Book is a sample struct used in the Codable routes
-
 public struct Book: Codable {
     
     //MARK: Properties
@@ -42,8 +41,8 @@ public struct Book: Codable {
             return nil
         }
         
-        // Initialization should fail if there is no name or if the rating is negative.
-        if name.isEmpty || rating < 0  {
+        // Initialization should fail if there is no author or if the rating is negative.
+        if author.isEmpty || rating < 0  {
             return nil
         }
         

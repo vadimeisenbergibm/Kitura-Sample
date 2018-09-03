@@ -210,30 +210,47 @@ class KituraTest: XCTestCase {
     func runGetCodableResponseTest(path: String, expectedResponse: [Book]? = nil, expectedStatusCode: HTTPStatusCode = HTTPStatusCode.OK) {
         performServerTest { expectation in
             self.performRequest("get", path: path, expectation: expectation) { response in
-                self.checkCodableResponse(response: response, expectedResponse: expectedResponse,
+                self.checkCodableResponse(response: response, expectedResponseArray: expectedResponse,
                                           expectedStatusCode: expectedStatusCode)
                 expectation.fulfill()
             }
         }
     }
     
-    func checkCodableResponse(response: ClientResponse, expectedResponse: [Book]? = nil,
+    func checkCodableResponse<T: Codable & Equatable>(response: ClientResponse, expectedResponseArray: [T]? = nil,
                               expectedStatusCode: HTTPStatusCode = HTTPStatusCode.OK) {
         XCTAssertEqual(response.statusCode, expectedStatusCode,
                        "No success status code returned")
         if let optionalBody = try? response.readString(), let body = optionalBody {
             if body.isEmpty {
-                XCTAssertNil(expectedResponse)
+                XCTAssertNil(expectedResponseArray)
             } else {
                 let json = body.data(using: .utf8)!
                 do {
-                    let myStruct = try JSONDecoder().decode([Book].self, from: json)
-                    if let expectedBooks = expectedResponse {
-                        XCTAssertTrue(myStruct.elementsEqual(expectedBooks))
+                    let myStruct = try JSONDecoder().decode([T].self, from: json)
+                    if let expectedResponseArray = expectedResponseArray {
+                        XCTAssertTrue(myStruct.elementsEqual(expectedResponseArray))
                     }
                 } catch {
                     print("Error")
                 }
+            }
+        } else {
+            XCTFail("No response body")
+        }
+    }
+    
+    func checkCodableResponse<T: Codable & Equatable>(response: ClientResponse, expectedResponse: T,
+                              expectedStatusCode: HTTPStatusCode = HTTPStatusCode.OK) {
+        XCTAssertEqual(response.statusCode, expectedStatusCode,
+                       "No success status code returned")
+        if let optionalBody = try? response.readString(), let body = optionalBody {
+            let json = body.data(using: .utf8)!
+            do {
+                let myStruct = try JSONDecoder().decode(T.self, from: json)
+                XCTAssertTrue(myStruct == expectedResponse)
+            } catch {
+                print("Error")
             }
         } else {
             XCTFail("No response body")

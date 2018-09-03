@@ -17,14 +17,24 @@
 import Kitura
 import LoggerAPI
 
-func initializeMiscRoutes(app: App) {
+func initializeAdditionalRoutes(app: App) {
     
-    // This route executes the echo middleware
-    app.router.all(middleware: BasicAuthMiddleware())
+    // Uses multiple handler blocks
+    app.router.get("/multi", handler: { request, response, next in
+        response.send("I'm here!\n")
+        next()
+    }, { request, response, next in
+        response.send("Me too!\n")
+        next()
+    })
+    
+    app.router.get("/multi") { request, response, next in
+        try response.send("I come afterward..\n").end()
+    }
     
     // Redirection example
-    app.router.get("/redir") { _, response, next in
-        try response.redirect("http://www.ibm.com/us-en/")
+    app.router.get("/redirect") { _, response, next in
+        try response.redirect("https://www.kitura.io")
         next()
     }
 
@@ -41,20 +51,6 @@ func initializeMiscRoutes(app: App) {
 
     app.router.get("/user/:id", allowPartialMatch: false, middleware: CustomParameterMiddleware())
     app.router.get("/user/:id", handler: customParameterHandler)
-}
-
-/**
- * RouterMiddleware can be used for intercepting requests and handling custom behavior
- * such as authentication and other routing
- */
-class BasicAuthMiddleware: RouterMiddleware {
-    func handle(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) {
-        let authString = request.headers["Authorization"]
-        Log.info("Authorization: \(String(describing: authString))")
-        // Check authorization string in database to approve the request if fail
-        // response.error = NSError(domain: "AuthFailure", code: 1, userInfo: [:])
-        next()
-    }
 }
 
 let customParameterHandler: RouterHandler = { request, response, next in

@@ -31,7 +31,7 @@ public class App {
     let router = Router()
     let cloudEnv = CloudEnv()
     let nameSemaphore = DispatchSemaphore(value: 1)
-    var name: String?
+    var name: Name?
     let bookSemaphore = DispatchSemaphore(value: 1)
     var bookStore: [Book] = [Book(name: "Sample", author: "zzz", rating: 5)!]
     
@@ -43,14 +43,13 @@ public class App {
     func postInit() throws {
         // Endpoints
         initializeHelloRoutes(app: self)
-        initializeMultiHandlerRoutes(app: self)
+        initializeAdditionalRoutes(app: self)
         initializeStencilRoutes(app: self)
         initializeMarkdownRoutes(app: self)
         initializeErrorRoutes(app: self)
         initializeCodableRoutes(app: self)
         initializeHealthRoutes(app: self)
         initializeStaticFileServers(app: self)
-        initializeMiscRoutes(app: self)
         initializeNotFoundRoute(app: self)
         KituraOpenAPI.addEndpoints(to: router)
     }

@@ -19,17 +19,13 @@ import KituraContracts
 func initializeCodableRoutes(app: App) {
     
    //Codable route for post
-    app.router.post("/books", handler: app.persistBookHandler)
-
-    //Codable route for get with and without parameters
     app.router.get("/books", handler: app.queryGetHandler)
+    app.router.post("/books", handler: app.postBookHandler)
+    app.router.put("/books", handler: app.putBookHandler)
+    app.router.delete("/books", handler: app.deleteAllBookHandler)
 }
+
 extension App {
-    func persistBookHandler(book: Book, completion: (Book?, RequestError?) -> Void ) {
-        addBook(book)
-        completion(book, nil)
-    }
-    
     func queryGetHandler(query: BookQuery, respondWith: ([Book]?, RequestError?) -> Void) {
         // Filter data using query parameters provided to the application
         if let bookName = query.name {
@@ -39,17 +35,58 @@ extension App {
             return respondWith(getBooks(), nil)
         }
     }
-    
-    func addBook(_ book: Book) {
-        bookSemaphore.wait()
-        bookStore.append(book)
-        bookSemaphore.signal()
+
+    func postBookHandler(book: Book, completion: (Book?, RequestError?) -> Void ) {
+        addBook(book)
+        completion(book, nil)
     }
-    
+
+    func putBookHandler(bookIndex: Int, book: Book, completion: (Book?, RequestError?) -> Void ) {
+        if putBook(book, index: bookIndex) {
+            completion(book, nil)
+        } else {
+            completion(nil, .badRequest)
+        }
+        
+    }
+
+    func deleteAllBookHandler(completion: (RequestError?) -> Void) {
+        deleteBooks()
+        return completion(nil)
+    }
+
+    // The 'bookStore' dictionary is a shared across the server.
+    // Since requests are handled asynchronously, if two threads try to write to
+    // 'bookStore' at the same time the system with crash. To solve this we are using
+    // a semaphore to allow only a single thread to access 'bookStore' at one time.
     func getBooks() -> [Book] {
         bookSemaphore.wait()
         let safeBooks = bookStore
         bookSemaphore.signal()
         return safeBooks
+    }
+
+    func addBook(_ book: Book) {
+        bookSemaphore.wait()
+        bookStore.append(book)
+        bookSemaphore.signal()
+    }
+
+    func putBook(_ book: Book, index: Int) -> Bool {
+        bookSemaphore.wait()
+        if bookStore.indices.contains(index) {
+            bookStore[index] = book
+            bookSemaphore.signal()
+            return true
+        } else {
+            bookSemaphore.signal()
+            return false
+        }
+    }
+    
+    func deleteBooks() {
+        bookSemaphore.wait()
+        bookStore = []
+        bookSemaphore.signal()
     }
 }

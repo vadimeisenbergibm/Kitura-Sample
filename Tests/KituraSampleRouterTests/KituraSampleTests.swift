@@ -147,7 +147,7 @@ class KituraSampleTests: KituraTest {
     }
 
     func testRedirection() {
-        runTestThatCorrectHTMLTitleIsReturned(expectedTitle: "IBM - United States", path: "/redir")
+        runTestThatCorrectHTMLTitleIsReturned(expectedTitle: "Kitura - An Enterprise-Grade Server-Side Swift Web Framework", path: "/redirect")
     }
 
     func testDefaultIndex() {

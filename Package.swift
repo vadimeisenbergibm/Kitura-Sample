@@ -30,7 +30,7 @@ let package = Package(
         .package(url: "https://github.com/IBM-Swift/Kitura-OpenAPI.git", from: "1.0.0"),
         .package(url: "https://github.com/IBM-Swift/Kitura-StencilTemplateEngine.git", from: "1.9.0"),
         .package(url: "https://github.com/IBM-Swift/Kitura-Markdown.git", from: "1.0.0"),
-        .package(url: "https://github.com/IBM-Swift/Kitura-WebSocket.git", from: "2.0.0")
+        .package(url: "https://github.com/IBM-Swift/Kitura-WebSocket.git", from: "2.0.0"),
     ],
     targets: [
         .target(name: "Kitura-Sample", dependencies: [ .target(name: "Application"), .target(name: "ChatService"), "Kitura" , "HeliumLogger"]),

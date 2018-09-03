@@ -31,7 +31,7 @@ class TestCodableRoutes: KituraTest {
         let book: Book = Book(name: "Sample", author: "zzz", rating: 5)
         performServerTest { expectation in
             self.performRequest("get", path: "/books", expectation: expectation) { response in
-                self.checkCodableResponse(response: response, expectedResponse: [book])
+                self.checkCodableResponse(response: response, expectedResponseArray: [book])
                 expectation.fulfill()
             }
         }
@@ -39,12 +39,13 @@ class TestCodableRoutes: KituraTest {
     
     func testCodablePost() {
         let book: String = "{\"name\": \"xxx\",\"author\": \"yyy\",\"rating\": 4}"
-        let expectedBooks: [Book] = [Book(name: "Sample", author: "zzz", rating: 5), Book(name: "xxx", author: "yyy", rating: 4)]
+        let sentBook = Book(name: "xxx", author: "yyy", rating: 4)
+        let expectedBooks: [Book] = [Book(name: "Sample", author: "zzz", rating: 5), sentBook]
         performServerTest(asyncTasks: { expectation in
             self.performRequest("post", path: "/books", body: book, expectation: expectation, headers: ["Content-Type":"application/json"]) { response in
-                self.checkCodableResponse(response: response, expectedResponse: expectedBooks, expectedStatusCode: HTTPStatusCode.created)
+                self.checkCodableResponse(response: response, expectedResponse: sentBook, expectedStatusCode: HTTPStatusCode.created)
                 self.performRequest("get", path: "/books", expectation: expectation, headers: ["Content-Type":"application/json"]) { response in
-                    self.checkCodableResponse(response: response, expectedResponse: expectedBooks)
+                    self.checkCodableResponse(response: response, expectedResponseArray: expectedBooks)
                     expectation.fulfill()
                 }
             }
@@ -53,7 +54,7 @@ class TestCodableRoutes: KituraTest {
 }
 
 
-struct Book: Decodable, Equatable {
+struct Book: Codable, Equatable {
     
     let name: String
     let author: String
