@@ -108,7 +108,7 @@ $(document).ready(function(){
            url: '/books',
            type: 'DELETE',
            success: function(data,status){
-               alert("Server response data: " + data + "\nStatus: " + status);
+               alert("Server successfully deleted \nStatus: " + status);
            }
          });
      });
@@ -128,7 +128,6 @@ $(document).ready(function(){
      <ul><li>
          <p>Send an HTTP GET request to &quot;/books&quot; to receive an array of books</p>
          <input type="button" value="GET to &quot;/books&quot;" id="getButton" >
-         </button>
      </li></ul>
      <ul><li>
          <p>Add a book by sending a JSON-encoded HTTP POST request to &quot;/books&quot;</p>
