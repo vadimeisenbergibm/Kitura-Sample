@@ -1,0 +1,15 @@
+
+<!DOCTYPE html>
+<html>
+	<body>
+		<h2>JWT Generation</h2>
+		
+		<h4>The following details will be used to create your JWTs Claims.</h4>
+		<form action="create_token" method="post" enctype="application/x-www-form-urlencoded" target="redirect">
+			Name: 	<input type="text" name="name" required="required"><br>
+Favourite Number: 	<input type="number" name="favourite" required="required"><br>
+					<input type="submit" value="Submit Details">
+		</form>
+		<iframe name="redirect" style="display:none;"></iframe>
+	</body>
+</html>

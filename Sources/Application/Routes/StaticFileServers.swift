@@ -21,6 +21,6 @@ import LoggerAPI
 func initializeStaticFileServers(app: App) {
     app.router.all("/static", middleware: StaticFileServer())
     app.router.all("/chat", middleware: StaticFileServer(path: "./chat"))
-	app.router.all("/jwt", middleware: StaticFileServer(path: "./Keys"))
+	app.router.all("/JWT", middleware: StaticFileServer(path: "./jwt"))
     app.router.all("/", middleware: StaticFileServer(path: "./Views"))
 }
