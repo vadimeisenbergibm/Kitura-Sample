@@ -49,6 +49,7 @@ public class App {
         initializeErrorRoutes(app: self)
         initializeCodableRoutes(app: self)
         initializeBasicAuthRoutes(app: self)
+        initializeTokenAuthRoutes(app: self)
         initializeSessionsRoutes(app: self)
         initializeHealthRoutes(app: self)
         initializeStaticFileServers(app: self)
