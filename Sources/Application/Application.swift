@@ -52,6 +52,7 @@ public class App {
         initializeSessionsRoutes(app: self)
         initializeDatabaseRoutes(app: self)
         initializeHealthRoutes(app: self)
+        initializeOauth2Routes(app: self)
         initializeStaticFileServers(app: self)
         KituraOpenAPI.addEndpoints(to: router)
         // The not found route must be last since it matches all requests.
