@@ -17,7 +17,9 @@
          $.ajax({
              url: '/jwt/create_token', // url where to submit the request
              type : "POST", // type of action POST || GET
-             Accept: "application/jwt", // Expect a JWT Token in response
+             headers: {
+                Accept: "application/jwt" // Expect a JWT Token in response
+            },
              contentType: "application/json", // set the request Content-Type header
              data : JSON.stringify(jsonData), // post data || get data
              success: function(data, status){
@@ -25,6 +27,29 @@
              },
              error: function() {
                  alert("Failed to post JSON");
+             }
+         })
+     });
+ });
+ // Script to POST JSON from a HTML form
+  $(document).ready(function(){
+     $("#submitPostJWT").on('click', function(){
+     var jwtToken = $("#postjwt_form").serializeArray()[0].value;
+     console.log(JSON.stringify(jwtToken));
+         // send ajax
+         $.ajax({
+             url: '/jwtcoder', // url where to submit the request
+             type : "POST", // type of action POST || GET
+             headers: {
+                Accept: "application/jwt", // Expect a JWT Token in response
+                "Content-Type": "application/jwt"  // set the request Content-Type header
+            },
+             data : jwtToken, // post data || get data
+             success: function(data, status){
+                 alert("JWT token:" + JSON.stringify(data));
+             },
+             error: function() {
+                 alert("Request failed: Did not receive valid JWT");
              }
          })
      });
@@ -57,7 +82,7 @@
  <body>
    <h2>JWT Generation</h2>
      <p>
-         This page will geterate a JWT token.
+         This page will generate a JWT token.
          You can then make a request to the server using that token as authentication.
       </p>
       <br>
@@ -75,10 +100,19 @@
         <p>Authenticate using the JWT Token and view the decoded token</p>
         <form action="" method="get" id="get_form">
           <div class="block">
-            <label>Token:</label> <input type="text" name="name" required="required"><br><br>
+            <label>Token:</label> <input type="text" name="token" required="required"><br><br>
             <input id="submitJWTGet" type="button" name="Submit" value="Submit">
           </div>
         </form>
     </li></ul>
+    <ul><li>
+       <p>Post a JWT token and recieve the same token back as a response</p>
+       <form action="" method="post" id="postjwt_form">
+         <div class="block">
+           <label>Token:</label> <input type="text" name="token" required="required"><br><br>
+           <input id="submitPostJWT" type="button" name="Submit" value="Submit">
+         </div>
+       </form>
+   </li></ul>
  </body>
 </html>

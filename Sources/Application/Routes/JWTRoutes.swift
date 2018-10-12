@@ -29,12 +29,20 @@ func initializeJWTRoutes(app: App) {
         Log.error("Failed to read private key from file")
         return
     }
-    app.router.encoders[MediaType(type: .application, subType: "jwt")] = { return JWTEncoder(algorithm: .rs256(privateKey, .privateKey)) }    
+    guard let publicKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_public_key", isDirectory: false)) else {
+        Log.error("Failed to read public key from file")
+        return
+    }
+    app.router.encoders[MediaType(type: .application, subType: "jwt")] = { return JWTEncoder(algorithm: .rs256(privateKey, .privateKey)) }
+    app.router.decoders[MediaType(type: .application, subType: "jwt")] = { return JWTDecoder(algorithm: .rs256(publicKey, .publicKey)) }
 	app.router.post("/jwt/create_token", handler: app.postFormHandler)
     app.router.get("/jwt/protected", handler: app.protectedHandler)
+    // This route accepts JSON or URLEncoded POST requests
+    app.router.post("/jwtcoder", handler: app.jwtCoder)
 }
 
 extension App {
+    
     func postFormHandler(claims: TokenDetails, respondWith: (JWT<TokenDetails>?, RequestError?) -> Void) {
         let datedClaim = TokenDetails(iat: Date(), exp: Date(timeIntervalSinceNow: 3600), name: claims.name, favourite: claims.favourite)
         let jwt = JWT(header: Header(typ: "JWT", alg: "rs256"), claims: datedClaim)
@@ -46,6 +54,11 @@ extension App {
             return respondWith(nil, .badRequest)
         }
         respondWith(typeSafeJWT.jwt, nil)
+    }
+    
+    func jwtCoder(inJWT: JWT<TokenDetails>, respondwith: (JWT<TokenDetails>?, RequestError?) -> Void ) {
+        print("Got a JWT")
+        respondwith(inJWT, nil)
     }
 }
 
