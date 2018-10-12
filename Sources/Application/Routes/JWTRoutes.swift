@@ -23,102 +23,64 @@ import LoggerAPI
 
 func initializeJWTRoutes(app: App) {
 	
-	app.router.post("/static/create_token", handler: postFormHandler)
-	app.router.get("/static/token_generated") { request, response, next in
-		
-	}
+    // set up JWT encoder
+    let localURL = FileKit.projectFolderURL
+    guard let privateKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_private_key", isDirectory: false)) else {
+        Log.error("Failed to read private key from file")
+        return
+    }
+    app.router.encoders[MediaType(type: .application, subType: "jwt")] = { return JWTEncoder(algorithm: .rs256(privateKey, .privateKey)) }    
+	app.router.post("/jwt/create_token", handler: app.postFormHandler)
+    app.router.get("/jwt/protected", handler: app.protectedHandler)
 }
 
-func postFormHandler(jwtMiddleware: JWTMiddleware, respondWith: (TokenDetails?, RequestError?) -> Void) {
-	respondWith(TokenDetails(name: jwtMiddleware.name, favourite: jwtMiddleware.favourite), nil)
+extension App {
+    func postFormHandler(claims: TokenDetails, respondWith: (JWT<TokenDetails>?, RequestError?) -> Void) {
+        let datedClaim = TokenDetails(iat: Date(), exp: Date(timeIntervalSinceNow: 3600), name: claims.name, favourite: claims.favourite)
+        let jwt = JWT(header: Header(typ: "JWT", alg: "rs256"), claims: datedClaim)
+        respondWith(jwt, nil)
+    }
+    
+    func protectedHandler(typeSafeJWT: TypeSafeJWT<TokenDetails>, respondWith: (JWT<TokenDetails>?, RequestError?) -> Void) {
+        guard case .success = typeSafeJWT.jwt.validateClaims() else {
+            return respondWith(nil, .badRequest)
+        }
+        respondWith(typeSafeJWT.jwt, nil)
+    }
 }
 
-func createToken(token: TokenDetails) -> String? {
-	
-	let localURL = FileKit.projectFolderURL
-	
-	enum JWTError {
-		case keyNotFound
-	}
-	
-	// Get the private key data into a Swift variable
-	let fileData = try! Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_private_key", isDirectory: false))
-	
-	// Set expiration time for today's date plus one week (in seconds)
-	let expirationDate = Double(Date().timeIntervalSince1970 + 604800)
-
-	
-	//Create JWT and use token data to create claims
-	var jwt = JWT(header: Header([.typ:"JWT", .alg:"rs256"]), claims: Claims([.name:"JWT"]))
-	jwt.claims["username"] = token.name
-	jwt.claims["favouriteNumber"] = String(token.favourite)
-	jwt.claims[.iat] = String(Date().timeIntervalSince1970)
-	jwt.claims[.exp] = String(expirationDate)
-	
-	// Sign JWT using the private key. Remember, this isn't encrypted, just signed.
-	let signedJWT = try! jwt.sign(using: .rs256(fileData, .privateKey))
-	
-	return signedJWT
+struct TokenDetails: Codable, QueryParams, Claims {
+    // Standard JWT Fields
+    var iat: Date?
+    var exp: Date?
+    
+    let name: String
+    let favourite: Int
 }
 
-struct TokenDetails: Codable, QueryParams {
-	let name: String
-	let favourite: Int
-}
-
-struct JWTMiddleware: TypeSafeMiddleware {
-	
-//	let token: TokenDetails
-	
-	let name: String
-	let favourite: Int
-	
-	static func handle(request: RouterRequest, response: RouterResponse, completion: @escaping (JWTMiddleware?, RequestError?) -> Void) {
-		
-		let token: TokenDetails!
-		
-		do {
-			token = try request.read(as: TokenDetails.self)
-		} catch {
-			Log.error("Error: could not decode \(error)")
-			return completion(nil, .badRequest)
-		}
-		
-		// Create the JWT
-		let jwt = createToken(token: token)
-		
-		// Make a cookie to save to the JWT to the browsers storage
-		let cookie = HTTPCookie(properties: [HTTPCookiePropertyKey.name: "JWT-KituraTest", HTTPCookiePropertyKey.value: jwt!, HTTPCookiePropertyKey.domain: "localhost", HTTPCookiePropertyKey.path: "/"])
-
-		response.cookies[cookie!.name] = cookie
-		
-		let selfinstance = JWTMiddleware(token: token)
-		
-		return completion(selfinstance, nil)
-	}
-	
-	init(token: TokenDetails) {
-		self.name = token.name
-		self.favourite = token.favourite
-	}
-	
-}
-
-extension Router {
-	public func post<T: TypeSafeMiddleware, O: Codable>(
-		_ route: String,
-		handler: @escaping (T, @escaping CodableResultClosure<O>) -> Void
-		) {
-		post(route) { request, response, next in
-			Log.info("we did my custom one")
-
-			T.handle(request: request, response: response) { (typeSafeMiddleware: T?, error: RequestError?) in
-				guard let typeSafeMiddleware = typeSafeMiddleware else {
-					response.status(CodableHelpers.httpStatusCode(from: error ?? .internalServerError))
-					return next()
-				}
-				handler(typeSafeMiddleware, CodableHelpers.constructOutResultHandler(successStatus: .created, response: response, completion: next))
-			}
-		}
-	}
+struct TypeSafeJWT<C: Claims>: TypeSafeMiddleware {
+    let jwt: JWT<C>
+    static var decoder: JWTDecoder? {
+        let localURL = FileKit.projectFolderURL
+        guard let publicKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_public_key", isDirectory: false)) else {
+            Log.error("Failed to read public key from file")
+            return nil
+        }
+        return JWTDecoder(algorithm: .rs256(publicKey, .publicKey))
+    }
+    
+    public static func handle(request: RouterRequest, response: RouterResponse, completion: @escaping (TypeSafeJWT<C>?, RequestError?) -> Void) {
+        guard let decoder = decoder else {
+            return completion(nil, .internalServerError)
+        }
+        let authorizationHeader = request.headers["Authorization"]
+        guard let authorizationHeaderComponents = authorizationHeader?.components(separatedBy: " "),
+            authorizationHeaderComponents.count == 2,
+            authorizationHeaderComponents[0] == "Bearer",
+            let jwt = try? decoder.decode(JWT<C>.self, fromString: authorizationHeaderComponents[1])
+        else {
+            return completion(nil, .unauthorized)
+        }
+        completion(TypeSafeJWT(jwt: jwt), nil)
+    }
 }
