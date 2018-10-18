@@ -22,7 +22,7 @@ import PackageDescription
 let package = Package(
     name: "Kitura-Sample",
     dependencies: [
-        .package(url: "https://github.com/IBM-Swift/Kitura.git", from: "2.5.0"),
+        .package(url: "https://github.com/IBM-Swift/Kitura.git", .branch("issue.headersForDecoder")),
         .package(url: "https://github.com/IBM-Swift/HeliumLogger.git", from: "1.7.1"),
         .package(url: "https://github.com/IBM-Swift/CloudEnvironment.git", from: "8.0.0"),
         .package(url: "https://github.com/RuntimeTools/SwiftMetrics.git", from: "2.0.0"),

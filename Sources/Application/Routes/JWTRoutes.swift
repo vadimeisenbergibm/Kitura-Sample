@@ -33,16 +33,35 @@ func initializeJWTRoutes(app: App) {
         Log.error("Failed to read public key from file")
         return
     }
-    app.router.encoders[MediaType(type: .application, subType: "jwt")] = { return JWTEncoder(algorithm: .rs256(privateKey, .privateKey)) }
-    app.router.decoders[MediaType(type: .application, subType: "jwt")] = { return JWTDecoder(algorithm: .rs256(publicKey, .publicKey)) }
+    app.router.encoders[MediaType(type: .application, subType: "jwt")] = {_ in return JWTEncoder(algorithm: .rs256(privateKey, .privateKey)) }
+
+    app.router.decoders[MediaType(type: .application, subType: "jwt")] = {
+        (requestHeaders: Headers) in
+        let selectedKey = HolderOfKeys.getDecodingKey(keyNumber: Int(requestHeaders["keyNumber"] ?? "") ?? 0)
+        return JWTDecoder(algorithm: .rs256(selectedKey, .publicKey))
+    }
+
+    let dummyKey = Data(capacity: 0)
+    HolderOfKeys.keys.append(dummyKey)
+    HolderOfKeys.keys.append(publicKey)
+
 	app.router.post("/jwt/create_token", handler: app.postFormHandler)
     app.router.get("/jwt/protected", handler: app.protectedHandler)
     // This route accepts JSON or URLEncoded POST requests
     app.router.post("/jwtcoder", handler: app.jwtCoder)
 }
 
+class HolderOfKeys {
+    static var keys: [Data] = []
+    static let dummyKey = Data(capacity: 0)
+
+    class func getDecodingKey(keyNumber: Int) -> Data {
+        return (keyNumber >= 0 && keyNumber < keys.count ? keys[keyNumber] : dummyKey)
+    }
+}
+
 extension App {
-    
+
     func postFormHandler(claims: TokenDetails, respondWith: (JWT<TokenDetails>?, RequestError?) -> Void) {
         let datedClaim = TokenDetails(iat: Date(), exp: Date(timeIntervalSinceNow: 3600), name: claims.name, favourite: claims.favourite)
         let jwt = JWT(header: Header(typ: "JWT", alg: "rs256"), claims: datedClaim)
@@ -73,17 +92,15 @@ struct TokenDetails: Codable, QueryParams, Claims {
 
 struct TypeSafeJWT<C: Claims>: TypeSafeMiddleware {
     let jwt: JWT<C>
-    static var decoder: JWTDecoder? {
-        let localURL = FileKit.projectFolderURL
-        guard let publicKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_public_key", isDirectory: false)) else {
-            Log.error("Failed to read public key from file")
-            return nil
-        }
-        return JWTDecoder(algorithm: .rs256(publicKey, .publicKey))
+    // Duplicate of Router.decoders for application/jwt
+    static func decoder(headers: Headers) -> JWTDecoder? {
+        let selectedKey = HolderOfKeys.getDecodingKey(keyNumber: Int(headers["keyNumber"] ?? "") ?? 0)
+        return JWTDecoder(algorithm: .rs256(selectedKey, .publicKey))
     }
-    
+
     public static func handle(request: RouterRequest, response: RouterResponse, completion: @escaping (TypeSafeJWT<C>?, RequestError?) -> Void) {
-        guard let decoder = decoder else {
+        // Ideally we'd get this from the router's decoders, but we don't have access to it
+        guard let decoder = decoder(headers: request.headers) else {
             return completion(nil, .internalServerError)
         }
         let authorizationHeader = request.headers["Authorization"]

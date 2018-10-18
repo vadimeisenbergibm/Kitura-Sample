@@ -35,6 +35,7 @@
   $(document).ready(function(){
      $("#submitPostJWT").on('click', function(){
      var jwtToken = $("#postjwt_form").serializeArray()[0].value;
+     var keyNumber = $("#postjwt_form").serializeArray()[1].value;
      console.log(JSON.stringify(jwtToken));
          // send ajax
          $.ajax({
@@ -42,7 +43,8 @@
              type : "POST", // type of action POST || GET
              headers: {
                 Accept: "application/jwt", // Expect a JWT Token in response
-                "Content-Type": "application/jwt"  // set the request Content-Type header
+                "Content-Type": "application/jwt",  // set the request Content-Type header
+                "keyNumber": keyNumber
             },
              data : jwtToken, // post data || get data
              success: function(data, status){
@@ -59,6 +61,7 @@
       // click on button submit
       $("#submitJWTGet").on('click', function(){
       var authorizationToken = "Bearer " + $("#get_form").serializeArray()[0].value;
+      var keyNumber = $("#get_form").serializeArray()[1].value;
       console.log(authorizationToken);
           // send ajax
           $.ajax({
@@ -66,6 +69,7 @@
               type : "GET", // type of action POST || GET
               beforeSend: function(request) {
                 request.setRequestHeader("Authorization", authorizationToken);
+                request.setRequestHeader("keyNumber", keyNumber)
               },
               success: function(data, status){
                   alert("Decoded JWT:" + JSON.stringify(data));
@@ -101,6 +105,10 @@
         <form action="" method="get" id="get_form">
           <div class="block">
             <label>Token:</label> <input type="text" name="token" required="required"><br><br>
+            <select name="keyNumber">
+                <option value="0">Dummy key</option>
+                <option value="1">Real key</option>
+            </select>
             <input id="submitJWTGet" type="button" name="Submit" value="Submit">
           </div>
         </form>
@@ -110,6 +118,10 @@
        <form action="" method="post" id="postjwt_form">
          <div class="block">
            <label>Token:</label> <input type="text" name="token" required="required"><br><br>
+           <select name="keyNumber">
+               <option value="0">Dummy key</option>
+               <option value="1">Real key</option>
+           </select>
            <input id="submitPostJWT" type="button" name="Submit" value="Submit">
          </div>
        </form>
