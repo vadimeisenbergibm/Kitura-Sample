@@ -135,6 +135,38 @@ To run the tests locally, run `swift test` from the Kitura-Sample directory.
 
 You can also run this sample application inside Xcode. For more details, visit [kitura.io](http://www.kitura.io/en/starter/xcode.html).
 
+## Running with Docker
+A description of the files related to Docker can be found in the [Docker files](#docker-files) setion. To build the two docker images, run the following commands from the root directory of the project:
+* `docker build -t myapp-run .`
+* `docker build -t myapp-build -f Dockerfile-tools .`
+You may customize the names of these images by specifying a different value after the `-t` option.
+
+To compile the application using the tools docker image, run:
+* `docker run -v $PWD:/swift-project -w /swift-project myapp-build /swift-utils/tools-utils.sh build release`
+
+To run the application:
+* `docker run -it -p 8080:8080 -v $PWD:/swift-project -w /swift-project myapp-run sh -c .build-ubuntu/release/Kitura-Sample`
+
+## Deploy to Cloud Foundry
+
+1. Log in to IBM Cloud
+
+```
+bluemix api https://api.ng.bluemix.net
+bluemix login
+bluemix target -o <YOUR_ORG> -s <YOUR_DEV_SPACE>
+```
+
+where YOUR_ORG is the organisation you used when signing up to IBM Cloud and YOUR_DEV_SPACE is the space you created.
+
+2. Deploy your application to IBM Cloud
+
+```
+bx app push
+```
+
+Open your browser to the deployed provided URL to see the application running. You can now update the URL used with KituraKit in the FoodTracker application to connect from the iOS app.
+
 ---
 
 ## License
