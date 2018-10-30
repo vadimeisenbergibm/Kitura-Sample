@@ -23,21 +23,38 @@ import LoggerAPI
 
 func initializeJWTRoutes(app: App) {
 	
-    // set up JWT encoder
+    // Retrieve the encrption Keys
     let localURL = FileKit.projectFolderURL
-    guard let privateKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_private_key", isDirectory: false)) else {
+    guard let rsaPrivateKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_private_key", isDirectory: false)) else {
         Log.error("Failed to read private key from file")
         return
     }
-    guard let publicKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_public_key", isDirectory: false)) else {
+    guard let rsaPublicKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/rsa_public_key", isDirectory: false)) else {
         Log.error("Failed to read public key from file")
         return
     }
-    app.router.encoders[MediaType(type: .application, subType: "jwt")] = { return JWTEncoder(algorithm: .rs256(privateKey, .privateKey)) }
-    app.router.decoders[MediaType(type: .application, subType: "jwt")] = { return JWTDecoder(algorithm: .rs256(publicKey, .publicKey)) }
+    guard let certPrivateKey = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/cert_private_key", isDirectory: false)) else {
+        Log.error("Failed to read private key from file")
+        return
+    }
+    guard let certificate = try? Data(contentsOf: localURL.appendingPathComponent("/JWT/certificate", isDirectory: false)) else {
+        Log.error("Failed to read public key from file")
+        return
+    }
+    
+    // Create the JWT Coders
+    let jwtSigners: [String: JWTSigner] = ["0": .rs256(privateKey: rsaPrivateKey), "1": .rs256(privateKey: certPrivateKey)]
+    let jwtVerifiers: [String: JWTVerifier] = ["0": .rs256(publicKey: rsaPublicKey), "1": .rs256(certificate: certificate)]
+    let jwtEncoder = JWTEncoder(keyIDToSigner: { kid in return jwtSigners[kid]})
+    let jwtDecoder = JWTDecoder(keyIDToVerifier: { kid in return jwtVerifiers[kid]})
+    
+    // Set the JWT Coders on the route
+    app.router.encoders[MediaType(type: .application, subType: "jwt")] = { return jwtEncoder }
+    app.router.decoders[MediaType(type: .application, subType: "jwt")] = { return jwtDecoder }
+    
+    // Register the app routes
 	app.router.post("/jwt/create_token", handler: app.postFormHandler)
     app.router.get("/jwt/protected", handler: app.protectedHandler)
-    // This route accepts JSON or URLEncoded POST requests
     app.router.post("/jwtcoder", handler: app.jwtCoder)
 }
 
@@ -45,7 +62,7 @@ extension App {
     
     func postFormHandler(claims: TokenDetails, respondWith: (JWT<TokenDetails>?, RequestError?) -> Void) {
         let datedClaim = TokenDetails(iat: Date(), exp: Date(timeIntervalSinceNow: 3600), name: claims.name, favourite: claims.favourite)
-        let jwt = JWT(header: Header(typ: "JWT", alg: "rs256"), claims: datedClaim)
+        let jwt = JWT(header: Header(kid: "0"), claims: datedClaim)
         respondWith(jwt, nil)
     }
     
@@ -79,7 +96,7 @@ struct TypeSafeJWT<C: Claims>: TypeSafeMiddleware {
             Log.error("Failed to read public key from file")
             return nil
         }
-        return JWTDecoder(algorithm: .rs256(publicKey, .publicKey))
+        return JWTDecoder(jwtVerifier: .rs256(publicKey: publicKey))
     }
     
     public static func handle(request: RouterRequest, response: RouterResponse, completion: @escaping (TypeSafeJWT<C>?, RequestError?) -> Void) {
