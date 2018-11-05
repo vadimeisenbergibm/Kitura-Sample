@@ -18,6 +18,16 @@
  **/
 
 import PackageDescription
+import Foundation
+
+var webSocketPackage: Package.Dependency
+
+// Temporarily use alternate branch of Kitura-WebSocket while building in NIO mode
+if ProcessInfo.processInfo.environment["KITURA_NIO"] != nil {
+    webSocketPackage = .package(url: "https://github.com/IBM-Swift/Kitura-WebSocket.git", .exact("0.1.0-nio"))
+} else {
+    webSocketPackage = .package(url: "https://github.com/IBM-Swift/Kitura-WebSocket.git", from: "2.0.0")
+}
 
 let package = Package(
     name: "Kitura-Sample",
@@ -30,7 +40,7 @@ let package = Package(
         .package(url: "https://github.com/IBM-Swift/Kitura-OpenAPI.git", from: "1.1.0"),
         .package(url: "https://github.com/IBM-Swift/Kitura-StencilTemplateEngine.git", from: "1.9.0"),
         .package(url: "https://github.com/IBM-Swift/Kitura-Markdown.git", from: "1.0.0"),
-        .package(url: "https://github.com/IBM-Swift/Kitura-WebSocket.git", from: "2.0.0"),
+        webSocketPackage,
         .package(url: "https://github.com/IBM-Swift/Kitura-CredentialsHTTP.git", from: "2.1.0"),
         .package(url: "https://github.com/IBM-Swift/Kitura-Session.git", from: "3.2.0"),
         .package(url: "https://github.com/IBM-Swift/Kitura-CredentialsGoogle.git", from: "2.2.0"),
