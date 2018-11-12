@@ -165,10 +165,6 @@ where YOUR_ORG is the organisation you used when signing up to IBM Cloud and YOU
 bx app push
 ```
 
-Open your browser to the deployed provided URL to see the application running. You can now update the URL used with KituraKit in the FoodTracker application to connect from the iOS app.
-
-**Note:** The Database routes will not function unless you set up and connect the sample to a PostgreSQL database in the cloud.
-
 ---
 
 ## License
